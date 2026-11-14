@@ -8,6 +8,7 @@
 <script>tailwind.config={theme:{extend:{colors:{navy:{DEFAULT:'#0B1F3A',700:'#14325c'},brand:{DEFAULT:'#14A89B',50:'#e6f7f5'},mist:'#EEF4FA'}}}}</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.50.0/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
@@ -71,15 +72,15 @@ function Landing({S}){
  const F=[['Career Discovery','Questionnaire with transparent match scores','Live now'],['Skill Gap Analyzer','Compare your skills with a career','Live now'],['Career Roadmap','30-day to 12-month plan with progress','Live now'],['Student Profile','Save your background and goals','Live now'],['Scholarship Finder','Official links, filters and saving','Live now'],['Internship Finder','Filters and saving (sample listings)','Live now'],['AI CV Builder','ATS-friendly CV as PDF','Stage 7'],['Interview Coach','Practice with rubric-based feedback','Stage 7']];
  return <div className="fade">
  <header className="sticky top-0 z-30 border-b border-white/10 bg-navy text-white"><div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-  <Logo dark/><nav className="hidden items-center gap-6 text-sm md:flex">{[['features','Features'],['how','How it works'],['about','About']].map(([i,l])=><button key={i} onClick={()=>goto(i)} className="hover:text-brand">{l}</button>)}{S.on&&S.user?<B onClick={()=>S.go('dashboard')}>Go to dashboard</B>:<><B v="o" className="!bg-transparent !text-white !border-white/40" onClick={()=>S.go('login')}>Log in</B><B onClick={()=>S.go('register')}>Get started</B></>}</nav>
-  <button className="md:hidden" aria-label="Menu" onClick={()=>setM(!m)}>☰</button></div>
+  <Logo dark/><nav className="hidden items-center gap-6 text-sm md:flex">{[['features','Features'],['how','How it works'],['about','About']].map(([i,l])=><button key={i} onClick={()=>goto(i)} className="hover:text-brand">{l}</button>)}{S.on&&S.user?<><B onClick={()=>S.go('dashboard')}>Go to dashboard</B><B v="o" className="!bg-transparent !text-white !border-white/40" onClick={()=>S.logout()}>Log out</B></>:<><B v="o" className="!bg-transparent !text-white !border-white/40" onClick={()=>S.go('login')}>Log in</B><B onClick={()=>S.go('register')}>Get started</B></>}</nav>
+  <div className="flex items-center gap-3 md:hidden">{!(S.on&&S.user)&&<button className="rounded-lg border border-white/40 px-3 py-1 text-sm" onClick={()=>S.go('login')}>Log in</button>}<button aria-label="Menu" onClick={()=>setM(!m)}>☰</button></div></div>
   {m&&<div className="space-y-2 border-t border-white/10 px-4 pb-4 pt-2 md:hidden">{[['features','Features'],['how','How it works'],['about','About']].map(([i,l])=><button key={i} className="block w-full py-1 text-left" onClick={()=>{setM(false);goto(i)}}>{l}</button>)}<div className="flex gap-2">{S.on&&S.user?<B onClick={()=>S.go('dashboard')}>Go to dashboard</B>:<><B v="o" onClick={()=>S.go('login')}>Log in</B><B onClick={()=>S.go('register')}>Get started</B></>}</div></div>}
  </header>
  <section className="bg-gradient-to-br from-navy via-navy-700 to-[#0f5c68] text-white"><div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 md:grid-cols-2 md:py-24">
   <div><p className="mb-3 inline-block rounded-full bg-white/10 px-3 py-1 text-xs">For students, graduates and young professionals · Pakistan first</p>
   <h1 className="text-4xl font-extrabold leading-tight md:text-5xl">Your Future. Your Skills. <span className="text-brand">Your Path.</span></h1>
   <p className="mt-4 text-slate-200">Discover careers that fit you, see which skills you are missing, and follow a realistic plan to get there.</p>
-  <div className="mt-6 flex flex-wrap gap-3"><B onClick={()=>S.go('register')}>Create free account</B><B v="o" onClick={()=>S.demo()}>Try the demo account</B></div></div>
+  <div className="mt-6 flex flex-wrap gap-3"><B onClick={()=>S.go('register')}>Create free account</B>{!S.cloud&&<B v="o" onClick={()=>S.demo()}>Try the demo account</B>}</div></div>
   <div className="rounded-2xl bg-white p-5 text-slate-900 shadow-2xl"><div className="mb-3 flex items-center justify-between"><b className="text-navy">Top matches</b><Demo/></div>
    {[['Data Analyst',88],['Economist / Policy Analyst',84],['Financial Analyst',79]].map(([n,p])=><div key={n} className="mb-3"><div className="mb-1 flex justify-between text-sm"><span>{n}</span><b>{p}%</b></div><Bar pct={p}/></div>)}
    <p className="text-xs text-slate-500">Example only. Your real scores come from the questionnaire.</p></div></div></section>
@@ -88,25 +89,26 @@ function Landing({S}){
  <section id="how" className="bg-mist"><div className="mx-auto max-w-6xl px-4 py-16"><h2 className="text-3xl font-bold text-navy">How it works</h2>
   <div className="mt-6 grid gap-4 md:grid-cols-4">{[['1','Create your profile','Tell us about your studies, skills and goals.'],['2','Take the assessment','Answer a short questionnaire about your strengths and interests.'],['3','See your matches','Get your top 5 careers with a clear scoring method.'],['4','Follow your plan','Close skill gaps with a step-by-step roadmap.']].map(([n,t,d])=><Card key={n}><div className="mb-2 grid h-8 w-8 place-items-center rounded-full bg-navy text-white">{n}</div><b className="text-navy">{t}</b><p className="mt-1 text-sm text-slate-600">{d}</p></Card>)}</div></div></section>
  <section id="about" className="mx-auto max-w-3xl px-4 py-16 text-center"><h2 className="text-3xl font-bold text-navy">About FuturePath</h2><p className="mt-3 text-slate-600">FuturePath AI helps students understand their abilities, find suitable careers, spot missing skills and build a realistic plan. Results are guidance, not guaranteed predictions.</p><B className="mt-6" onClick={()=>S.go('register')}>Start now</B></section>
- <footer className="bg-navy py-6 text-center text-sm text-slate-300">© 2026 FuturePath AI · Stage 1 prototype · demo data stays in your browser</footer></div>;
+ <footer className="bg-navy py-6 text-center text-sm text-slate-300">© 2026 FuturePath AI · {S.cloud?'Connected to Supabase':'Demo mode: not connected to a database'}</footer></div>;
 }
 
 /* ---------- AUTH ---------- */
 function Auth({S,mode}){
  const reg=mode==='register';
  const [f,setF]=useState({name:'',email:'',password:'',country:'Pakistan',level:'Undergraduate',uni:'',major:'',year:'2027'});
- const [e,setE]=useState({});const [msg,setMsg]=useState('');
+ const [e,setE]=useState({});const [msg,setMsg]=useState('');const [busy,setBusy]=useState(false),[info,setInfo]=useState('');
  const set=k=>ev=>setF({...f,[k]:ev.target.value});
- const submit=ev=>{ev.preventDefault();const x={};
+ const submit=async ev=>{ev.preventDefault();const x={};
   if(reg&&f.name.trim().length<2)x.name='Enter your full name.';
   if(!/^\S+@\S+\.\S+$/.test(f.email))x.email='Enter a valid email address.';
-  if(f.password.length<8)x.password='Use at least 8 characters.';
+  if(reg&&!pwOk(f.password))x.password='Use 8+ characters with a lowercase letter, an uppercase letter and a number.';else if(f.password.length<8)x.password='Use at least 8 characters.';
   if(reg){if(!f.uni.trim())x.uni='Required.';if(!f.major.trim())x.major='Required.'}
-  setE(x);setMsg('');if(Object.keys(x).length)return;
+  setE(x);setMsg('');setInfo('');if(Object.keys(x).length)return;
+  if(S.cloud){setBusy(true);const r=await S.cloudAuth(reg,f);setBusy(false);if(r.msg)setMsg(r.msg);if(r.ok)setInfo(r.ok);return}
   if(reg){S.wipe();S.setUser({name:f.name.trim(),email:f.email.trim().toLowerCase()});S.setProfile({...S.blank,country:f.country,level:f.level,uni:f.uni,major:f.major,year:f.year});S.setOn(true);S.act('Account created');S.go('dashboard')}
   else{if(S.user&&S.user.email===f.email.trim().toLowerCase()){S.setOn(true);S.act('Logged in');S.go('dashboard')}else setMsg('No demo account with this email in this browser. Register first, or use the demo account.')}};
  return <div className="grid min-h-screen md:grid-cols-2 fade">
-  <div className="hidden bg-gradient-to-br from-navy to-[#0f5c68] p-10 text-white md:flex md:flex-col md:justify-between"><Logo dark/><div><h2 className="text-3xl font-bold">Find the path that fits you.</h2><p className="mt-2 text-slate-200">Take the assessment, see your matches and start your roadmap.</p></div><p className="text-xs text-slate-300">Prototype: accounts exist only in this browser. Real secure login (Supabase) comes in Stage 2.</p></div>
+  <div className="hidden bg-gradient-to-br from-navy to-[#0f5c68] p-10 text-white md:flex md:flex-col md:justify-between"><Logo dark/><div><h2 className="text-3xl font-bold">Find the path that fits you.</h2><p className="mt-2 text-slate-200">Take the assessment, see your matches and start your roadmap.</p></div><p className="text-xs text-slate-300">{S.cloud?'Secure sign-in powered by Supabase.':'Demo mode: accounts exist only in this browser.'}</p></div>
   <div className="flex items-center justify-center p-6"><form onSubmit={submit} className="w-full max-w-md space-y-3" noValidate>
    <button type="button" className="text-sm text-brand" onClick={()=>S.go('home')}>← Back to home</button>
    <h1 className="text-2xl font-bold text-navy">{reg?'Create your student account':'Welcome back'}</h1>
@@ -118,11 +120,12 @@ function Auth({S,mode}){
    <Fld label="University or college" err={e.uni}><input className={inp} value={f.uni} onChange={set('uni')}/></Fld>
    <div className="grid grid-cols-2 gap-3"><Fld label="Degree and major" err={e.major}><input className={inp} value={f.major} onChange={set('major')}/></Fld>
    <Fld label="Graduation year"><select className={inp} value={f.year} onChange={set('year')}>{[2025,2026,2027,2028,2029,2030].map(x=><option key={x}>{x}</option>)}</select></Fld></div></>}
-   {msg&&<p className="rounded-lg bg-red-50 p-2 text-sm text-red-700">{msg}</p>}
-   <B className="w-full" type="submit">{reg?'Create account':'Log in'}</B>
-   <B v="o" className="w-full" type="button" onClick={()=>S.demo()}>Use demo account</B>
+   {msg&&<p className="rounded-lg bg-red-50 p-2 text-sm text-red-700">{msg}</p>}{info&&<p className="rounded-lg bg-brand-50 p-2 text-sm text-brand">{info}</p>}
+   <B className="w-full" type="submit" disabled={busy}>{busy?'Please wait…':reg?'Create account':'Log in'}</B>
+   {!reg&&<button type="button" className="block w-full text-center text-sm text-brand" onClick={()=>S.go('forgot')}>Forgot password?</button>}
+   {!S.cloud&&<B v="o" className="w-full" type="button" onClick={()=>S.demo()}>Use demo account</B>}
    <p className="text-center text-sm text-slate-600">{reg?'Already registered? ':'New here? '}<button type="button" className="font-semibold text-brand" onClick={()=>S.go(reg?'login':'register')}>{reg?'Log in':'Create an account'}</button></p>
-   <p className="text-xs text-slate-500">Demo only: your password is checked but never saved.</p></form></div></div>;
+   {!S.cloud&&<p className="text-xs text-slate-500">Demo only: your password is checked but never saved.</p>}</form></div></div>;
 }
 
 /* ---------- APP SHELL ---------- */
@@ -134,13 +137,13 @@ function Shell({S,page,children}){
   {NAV.map(([k,l])=><button key={k} onClick={()=>{setO(false);S.go(k)}} className={'rounded-lg px-3 py-2 text-left text-sm '+(page===k?'bg-brand font-semibold':'hover:bg-white/10')}>{l}</button>)}
   <p className="mt-4 px-3 text-xs uppercase tracking-wide text-slate-400">Coming later</p>
   {SOON.map(([l,s])=><div key={l} className="flex justify-between px-3 py-1.5 text-sm text-slate-400"><span>{l}</span><span className="text-xs">Stage {s}</span></div>)}
-  <div className="mt-auto space-y-1 pt-4"><button className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-white/10" onClick={()=>{S.setOn(false);S.go('home')}}>Log out</button>
+  <div className="mt-auto space-y-1 pt-4"><button className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-white/10" onClick={()=>S.logout()}>Log out</button>
   <button className="w-full rounded-lg px-3 py-2 text-left text-xs text-slate-400 hover:bg-white/10" onClick={()=>{if(!rc){setRc(true);return}try{Object.keys(localStorage).filter(k=>k.startsWith('fp:')).forEach(k=>localStorage.removeItem(k))}catch(e){}location.hash='home';location.reload()}}>{rc?'Click again to delete all demo data':'Reset demo data'}</button></div></div>;
  return <div className="min-h-screen md:flex">
   <aside className="hidden w-64 shrink-0 md:block"><div className="fixed h-full w-64">{side}</div></aside>
   {o&&<div className="fixed inset-0 z-40 flex md:hidden"><div className="w-64">{side}</div><div className="flex-1 bg-black/40" onClick={()=>setO(false)}/></div>}
   <main className="min-w-0 flex-1 bg-mist"><div className="flex items-center gap-3 border-b bg-white px-4 py-3 md:hidden"><button aria-label="Open menu" onClick={()=>setO(true)}>☰</button><Logo/></div>
-   <div className="bg-amber-50 px-4 py-2 text-xs text-amber-900">Prototype · <b>Sample data</b> saved only in this browser · No AI or database connected yet</div>
+   {S.net?<div className="bg-red-50 px-4 py-2 text-xs text-red-800">{S.net}</div>:S.cloud?<div className="bg-brand-50 px-4 py-2 text-xs text-navy">Signed in · your profile, answers, roadmap and saved items are stored in your account · career and finder listings are still <b>sample data</b> · no AI yet</div>:<div className="bg-amber-50 px-4 py-2 text-xs text-amber-900">Prototype · <b>Sample data</b> saved only in this browser · No AI or database connected yet</div>}
    <div className="fade mx-auto max-w-5xl p-4 md:p-8">{children}</div></main></div>;
 }
 const Head=({t,s,children})=><div className="mb-6 flex flex-wrap items-end justify-between gap-3"><div><h1 className="text-2xl font-bold text-navy">{t}</h1>{s&&<p className="text-sm text-slate-600">{s}</p>}</div>{children}</div>;
@@ -150,12 +153,12 @@ const Empty=({S,t,b,to})=><Card className="py-12 text-center"><p className="mb-4
 const PF=['country','level','uni','major','year','subjects','exp','certs','short','long'];
 const pct=p=>Math.round((PF.filter(k=>p[k]&&String(p[k]).trim()).length+(p.interests.length?1:0)+(Object.keys(p.skills).length?1:0))/12*100);
 function Profile({S}){
- const p=S.profile,[ns,setNs]=useState(''),[nl,setNl]=useState(3),[ok,setOk]=useState(false);
+ const p=S.profile,[ns,setNs]=useState(''),[nl,setNl]=useState(3),[ok,setOk]=useState(false),[dc,setDc]=useState(false);
  const set=k=>ev=>{setOk(false);S.setProfile({...p,[k]:ev.target.value})};
  const addS=()=>{const n=ns.trim();if(n){S.setProfile({...p,skills:{...p.skills,[n]:+nl}});setNs('')}};
  const tgl=i=>S.setProfile({...p,interests:p.interests.includes(i)?p.interests.filter(x=>x!==i):[...p.interests,i]});
- return <Shell S={S} page="profile"><Head t="My Profile" s={'Profile completion: '+pct(p)+'%'}><B onClick={()=>{S.act('Profile saved');setOk(true)}}>Save profile</B></Head>
- {ok&&<p className="mb-4 rounded-lg bg-brand-50 p-2 text-sm text-brand">Profile saved in this browser.</p>}
+ return <Shell S={S} page="profile"><Head t="My Profile" s={'Profile completion: '+pct(p)+'%'}><B onClick={async()=>{const e=await S.saveProfile();if(e){setOk('Could not save: '+e);return}S.act('Profile saved');setOk(true)}}>Save profile</B></Head>
+ {ok&&<p className="mb-4 rounded-lg bg-brand-50 p-2 text-sm text-brand">{ok===true?(S.cloud?'Profile saved to your account.':'Profile saved in this browser.'):ok}</p>}
  <div className="grid gap-4 md:grid-cols-2">
  <Card className="space-y-3"><h2 className="font-bold text-navy">Account</h2><Fld label="Name"><input className={inp} value={S.user.name} onChange={ev=>S.setUser({...S.user,name:ev.target.value})}/></Fld><p className="text-sm text-slate-600">Email: {S.user.email}</p>
   <Fld label="Country"><select className={inp} value={p.country} onChange={set('country')}>{['','Pakistan','Other'].map(x=><option key={x}>{x}</option>)}</select></Fld>
@@ -165,7 +168,8 @@ function Profile({S}){
  <Card><h2 className="mb-2 font-bold text-navy">Skills (self-rated 1–5)</h2><div className="mb-3 flex gap-2"><input className={inp} placeholder="e.g. Excel" value={ns} onChange={ev=>setNs(ev.target.value)} onKeyDown={ev=>ev.key==='Enter'&&addS()}/><select className={inp+' !w-20'} value={nl} onChange={ev=>setNl(ev.target.value)}>{[1,2,3,4,5].map(x=><option key={x}>{x}</option>)}</select><B onClick={addS}>Add</B></div>
   {Object.keys(p.skills).length?<div className="flex flex-wrap gap-2">{Object.entries(p.skills).map(([k,v])=><span key={k} className="rounded-full bg-mist px-3 py-1 text-sm">{k} · {v}/5 <button aria-label={'Remove '+k} className="ml-1 text-red-600" onClick={()=>{const s={...p.skills};delete s[k];S.setProfile({...p,skills:s})}}>×</button></span>)}</div>:<p className="text-sm text-slate-500">No skills yet. Add your first one above.</p>}</Card>
  <Card className="space-y-3 md:col-span-2"><h2 className="font-bold text-navy">Experience and goals</h2>
-  {[['exp','Work experience'],['certs','Certifications'],['short','Short-term goal (1 year)'],['long','Long-term goal (5 years)']].map(([k,l])=><Fld key={k} label={l}><textarea rows="2" className={inp} value={p[k]} onChange={set(k)}/></Fld>)}</Card></div></Shell>;
+  {[['exp','Work experience'],['certs','Certifications'],['short','Short-term goal (1 year)'],['long','Long-term goal (5 years)']].map(([k,l])=><Fld key={k} label={l}><textarea rows="2" className={inp} value={p[k]} onChange={set(k)}/></Fld>)}</Card></div>
+ <Card className="mt-4 border-red-200"><h2 className="font-bold text-navy">Delete my account</h2><p className="my-2 text-sm text-slate-600">This permanently removes your account and all your saved data. It cannot be undone.</p><B v="o" className="!border-red-300 !text-red-700" onClick={async()=>{if(!dc){setDc(true);return}const e=await S.delAcct();if(e)setOk('Could not delete: '+e)}}>{dc?'Click again to permanently delete':'Delete my account'}</B></Card></Shell>;
 }
 
 /* ---------- DISCOVERY ---------- */
@@ -298,12 +302,33 @@ function Intern({S}){
  <Card className="mt-6"><h2 className="font-bold text-navy">Where to find real opportunities</h2><p className="mb-3 text-sm text-slate-600">Real listings change daily, so search these sites yourself and confirm on the employer’s own page.</p><div className="grid gap-2 sm:grid-cols-2">{SRC.map(([n,d,u])=><a key={n} href={u} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-slate-200 p-3 text-sm hover:bg-mist"><b className="text-navy">{n} ↗</b><br/><span className="text-slate-600">{d}</span></a>)}</div></Card></Shell>;
 }
 
+/* ---------- SUPABASE (public URL + publishable key; safe in the browser, protected by Row Level Security) ---------- */
+const CFG={url:'https://knknvjpdtyfodjcpzltc.supabase.co',key:'sb_publishable_f8OLmJFlTMeYehEgGTJARA_oz9ZTRCR'};
+let SB=null;try{if(window.supabase)SB=window.supabase.createClient(CFG.url,CFG.key)}catch(e){SB=null}
+const pwOk=p=>p.length>=8&&/[a-z]/.test(p)&&/[A-Z]/.test(p)&&/\d/.test(p);
+function Forgot({S}){
+ const [em,setEm]=useState(''),[msg,setMsg]=useState(''),[busy,setBusy]=useState(false);
+ const send=async ev=>{ev.preventDefault();if(!/^\S+@\S+\.\S+$/.test(em)){setMsg('Enter a valid email address.');return}
+  if(!SB){setMsg('Password reset works on the connected website, not in this demo preview.');return}
+  setBusy(true);const {error}=await SB.auth.resetPasswordForEmail(em.trim().toLowerCase(),{redirectTo:location.origin+'/'});setBusy(false);
+  setMsg(error?error.message:'If an account exists for this email, a reset link has been sent. Check your inbox and spam folder.')};
+ return <div className="flex min-h-screen items-center justify-center p-6 fade"><form onSubmit={send} className="w-full max-w-md space-y-3" noValidate><button type="button" className="text-sm text-brand" onClick={()=>S.go('login')}>← Back to login</button><h1 className="text-2xl font-bold text-navy">Reset your password</h1><Fld label="Your email"><input className={inp} type="email" value={em} onChange={ev=>setEm(ev.target.value)}/></Fld>{msg&&<p className="rounded-lg bg-mist p-2 text-sm text-slate-700">{msg}</p>}<B className="w-full" type="submit" disabled={busy}>{busy?'Sending…':'Send reset link'}</B></form></div>;
+}
+function Reset({S}){
+ const [pw,setPw]=useState(''),[pw2,setPw2]=useState(''),[msg,setMsg]=useState('');
+ const sub=async ev=>{ev.preventDefault();if(!pwOk(pw)){setMsg('Use 8+ characters with a lowercase letter, an uppercase letter and a number.');return}if(pw!==pw2){setMsg('The two passwords do not match.');return}
+  if(!SB){setMsg('Password reset works on the connected website only.');return}
+  const {error}=await SB.auth.updateUser({password:pw});if(error){setMsg(error.message);return}S.go('dashboard')};
+ return <div className="flex min-h-screen items-center justify-center p-6 fade"><form onSubmit={sub} className="w-full max-w-md space-y-3" noValidate><h1 className="text-2xl font-bold text-navy">Choose a new password</h1><Fld label="New password"><input className={inp} type="password" value={pw} onChange={ev=>setPw(ev.target.value)}/></Fld><Fld label="Repeat new password"><input className={inp} type="password" value={pw2} onChange={ev=>setPw2(ev.target.value)}/></Fld>{msg&&<p className="rounded-lg bg-red-50 p-2 text-sm text-red-700">{msg}</p>}<B className="w-full" type="submit">Save new password</B></form></div>;
+}
+
 /* ---------- APP ---------- */
 function App(){
  const [page,setPage]=useState((location.hash||'#home').slice(1));
  const [user,setUser]=useStore('user',null);
  const [on,setOn]=useStore('in',false);
  const [sv,setSv]=useStore('saved',{s:[],i:[]});
+ const [uid,setUid]=useState(null),[loaded,setLoaded]=useState(false),[net,setNet]=useState('');const cur=React.useRef(null);
  const [profile,setProfile]=useStore('profile',{country:'',level:'',uni:'',major:'',year:'',subjects:'',exp:'',certs:'',short:'',long:'',interests:[],skills:{}});
  const [ans,setAns]=useStore('answers',null);
  const [goal,setGoal]=useStore('goal','');
@@ -311,12 +336,42 @@ function App(){
  const [acts,setActs]=useStore('acts',[]);
  useEffect(()=>{const f=()=>{setPage((location.hash||'#home').slice(1));window.scrollTo(0,0)};addEventListener('hashchange',f);return()=>removeEventListener('hashchange',f)},[]);
  const go=p=>{setPage(p);window.scrollTo(0,0);try{location.hash=p}catch(e){}};
- const act=t=>setActs(a=>[{t,d:new Date().toLocaleString()},...a].slice(0,20));
+ const act=t=>{setActs(a=>[{t,d:new Date().toLocaleString()},...a].slice(0,20));if(SB&&uid)SB.from('activity').insert({user_id:uid,message:t}).then(()=>{})};
  const blank={country:'',level:'',uni:'',major:'',year:'',subjects:'',exp:'',certs:'',short:'',long:'',interests:[],skills:{}};
  const wipe=()=>{setAns(null);setGoal('');setDone({});setActs([]);setSv({s:[],i:[]})};
  const demo=()=>{if(!user||user.email!=='demo@futurepath.test'){wipe();setProfile({...blank,country:'Pakistan',level:'Undergraduate',uni:'Sample University',major:'BS Economics',year:'2027',subjects:'Economics, Statistics',interests:['Development & NGOs','Finance'],skills:{Excel:3,Communication:3}})}setUser({name:'Demo Student',email:'demo@futurepath.test'});setOn(true);act('Opened demo account');go('dashboard')};
- const S={go,user,setUser,on,setOn,blank,wipe,sv,setSv,profile,setProfile,ans,setAns,goal,setGoal,done,setDone,acts,act,demo};
+ const cloud=!!SB;
+ const clearLocal=()=>{setLoaded(false);wipe();setProfile(blank);setUser(null);setOn(false)};
+ const logout=async()=>{if(SB){await SB.auth.signOut();cur.current=null;setUid(null);clearLocal()}else setOn(false);go('home')};
+ const delAcct=async()=>{if(!SB){wipe();setProfile(blank);setUser(null);setOn(false);go('home');return null}const {error}=await SB.rpc('delete_my_account');if(error)return error.message;await SB.auth.signOut();cur.current=null;setUid(null);clearLocal();go('home');return null};
+ const profRow=()=>({id:uid,full_name:user&&user.name,email:user&&user.email,country:profile.country,education_level:profile.level,university:profile.uni,major:profile.major,graduation_year:profile.year,subjects:profile.subjects,experience:profile.exp,certifications:profile.certs,short_goal:profile.short,long_goal:profile.long,interests:profile.interests,skills:profile.skills,career_goal:goal||null});
+ const saveProfile=async()=>{if(!SB||!uid)return null;const {error}=await SB.from('profiles').upsert(profRow());return error?error.message:null};
+ const cloudAuth=async(reg,f)=>{const email=f.email.trim().toLowerCase();
+  if(reg){const {data,error}=await SB.auth.signUp({email,password:f.password,options:{emailRedirectTo:location.origin+'/',data:{full_name:f.name.trim(),country:f.country,education_level:f.level,university:f.uni.trim(),major:f.major.trim(),graduation_year:f.year}}});
+   if(error)return{msg:error.message};if(data.session){go('dashboard');return{ok:'Account created. Loading your dashboard…'}}
+   return{ok:'Almost done! We sent a confirmation link to '+email+'. Open it, then come back here and log in.'}}
+  const {error}=await SB.auth.signInWithPassword({email,password:f.password});if(error)return{msg:error.message};go('dashboard');return{}};
+ const q=p=>p.then(({error})=>{if(error)setNet('Could not save to your account: '+error.message)});
+ useEffect(()=>{if(!SB)return;
+  const load=async u=>{if(cur.current===u.id)return;cur.current=u.id;setUid(u.id);const m=u.user_metadata||{};
+   try{const [pr,as,rm,sv2,ac]=await Promise.all([SB.from('profiles').select('*').eq('id',u.id).maybeSingle(),SB.from('assessments').select('answers').eq('user_id',u.id).maybeSingle(),SB.from('roadmap_progress').select('done').eq('user_id',u.id).maybeSingle(),SB.from('saved_items').select('kind,item_id').eq('user_id',u.id),SB.from('activity').select('message,created_at').eq('user_id',u.id).order('created_at',{ascending:false}).limit(20)]);
+    const bad=[pr,as,rm,sv2,ac].find(x=>x.error);if(bad)throw new Error(bad.error.message);
+    const r=pr.data||{};setUser({name:r.full_name||m.full_name||u.email,email:u.email});
+    setProfile({...blank,country:r.country||m.country||'',level:r.education_level||m.education_level||'',uni:r.university||m.university||'',major:r.major||m.major||'',year:r.graduation_year||m.graduation_year||'',subjects:r.subjects||'',exp:r.experience||'',certs:r.certifications||'',short:r.short_goal||'',long:r.long_goal||'',interests:r.interests||[],skills:r.skills||{}});
+    setGoal(r.career_goal||'');setAns(as.data?as.data.answers:null);setDone(rm.data?rm.data.done:{});
+    const rows=sv2.data||[];setSv({s:rows.filter(x=>x.kind==='scholarship').map(x=>x.item_id),i:rows.filter(x=>x.kind==='internship').map(x=>x.item_id)});
+    setActs((ac.data||[]).map(a=>({t:a.message,d:new Date(a.created_at).toLocaleString()})));setNet('');setOn(true);setLoaded(true)}
+   catch(e){cur.current=null;setNet('Could not load your data: '+e.message)}};
+  SB.auth.getSession().then(({data})=>{if(data.session)load(data.session.user);else clearLocal()});
+  const {data:sub}=SB.auth.onAuthStateChange((ev,s)=>{if(ev==='SIGNED_OUT'){cur.current=null;setUid(null);setLoaded(false);setOn(false)}else if(s){if(ev==='PASSWORD_RECOVERY')setTimeout(()=>go('reset'),0);setTimeout(()=>load(s.user),0)}});
+  return()=>sub.subscription.unsubscribe()},[]);
+ useEffect(()=>{if(!cloud||!loaded)return;const t=setTimeout(()=>q(SB.from('profiles').upsert(profRow())),600);return()=>clearTimeout(t)},[profile,goal,user]);
+ useEffect(()=>{if(!cloud||!loaded||!ans)return;const t=setTimeout(()=>{q(SB.from('assessments').upsert({user_id:uid,answers:ans}));q(SB.from('recommendations').upsert({user_id:uid,results:CAREERS.map(c=>({id:c.id,score:score(c,ans).total})).sort((a,b)=>b.score-a.score).slice(0,5),method:'sample-formula-v1'}))},600);return()=>clearTimeout(t)},[ans]);
+ useEffect(()=>{if(!cloud||!loaded)return;const t=setTimeout(()=>q(SB.from('roadmap_progress').upsert({user_id:uid,done})),600);return()=>clearTimeout(t)},[done]);
+ useEffect(()=>{if(!cloud||!loaded)return;const t=setTimeout(async()=>{await SB.from('saved_items').delete().eq('user_id',uid);const rows=[...sv.s.map(x=>({user_id:uid,kind:'scholarship',item_id:x})),...sv.i.map(x=>({user_id:uid,kind:'internship',item_id:x}))];if(rows.length)q(SB.from('saved_items').insert(rows))},600);return()=>clearTimeout(t)},[sv]);
+ const S={cloud,net,uid,cloudAuth,logout,delAcct,saveProfile,go,user,setUser,on,setOn,blank,wipe,sv,setSv,profile,setProfile,ans,setAns,goal,setGoal,done,setDone,acts,act,demo};
  const prot=['dashboard','profile','discover','results','gap','roadmap','scholar','intern'];
+ if(cloud&&uid&&!loaded&&prot.includes(page))return <div className="grid min-h-screen place-items-center text-slate-600">Loading your account…</div>;
  if(prot.includes(page)&&!(user&&on))return <Auth S={S} mode="login" key="login"/>;
  if(page==='login'||page==='register')return <Auth S={S} mode={page} key={page}/>;
  if(page==='dashboard')return <Dash S={S}/>;
@@ -327,6 +382,8 @@ function App(){
  if(page==='roadmap')return <Roadmap S={S}/>;
  if(page==='scholar')return <Scholar S={S}/>;
  if(page==='intern')return <Intern S={S}/>;
+ if(page==='forgot')return <Forgot S={S}/>;
+ if(page==='reset')return <Reset S={S}/>;
  return <Landing S={S}/>;
 }
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
